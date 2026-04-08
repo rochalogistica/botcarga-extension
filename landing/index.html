@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BotCarga - Cargas Disponiveis</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1a3a6b, #2563eb);
+      color: white;
+      padding: 24px 20px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .header h1 {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 3px;
+    }
+    .header p {
+      font-size: 14px;
+      opacity: 0.85;
+    }
+    .header-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #374151;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-count {
+      background: #2563eb;
+      color: white;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .carga-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border: 1px solid #e5e7eb;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .carga-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+
+    .carga-rota {
+      font-size: 18px;
+      font-weight: 800;
+      color: #1a3a6b;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .carga-rota .arrow {
+      color: #2563eb;
+      font-size: 20px;
+    }
+
+    .carga-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .carga-info-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #4b5563;
+    }
+    .carga-info-icon {
+      font-size: 16px;
+      width: 24px;
+      text-align: center;
+    }
+    .carga-info-label {
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .carga-valor {
+      font-size: 22px;
+      font-weight: 800;
+      color: #059669;
+      margin-bottom: 14px;
+    }
+
+    .btn-interesse {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px;
+      background: #25d366;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+    .btn-interesse:hover {
+      background: #1da851;
+    }
+    .btn-interesse:active {
+      transform: scale(0.98);
+    }
+
+    .footer {
+      text-align: center;
+      padding: 30px 20px;
+      color: #9ca3af;
+      font-size: 12px;
+    }
+    .footer a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #9ca3af;
+    }
+    .empty-state-icon { font-size: 50px; margin-bottom: 12px; }
+    .empty-state p { font-size: 16px; }
+
+    /* Responsivo */
+    @media (max-width: 480px) {
+      .carga-info-grid { grid-template-columns: 1fr; }
+      .carga-rota { font-size: 16px; }
+      .carga-valor { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <span style="font-size: 32px;">&#x1F69A;</span>
+    <h1>BOTCARGA</h1>
+  </div>
+  <p>Cargas disponiveis para voce</p>
+  <div class="header-badge">&#x1F4E6; Atualizado em tempo real</div>
+</div>
+
+<div class="container">
+  <div class="section-title">
+    &#x1F4CB; Cargas em Aberto
+    <span class="section-count" id="total-cargas">0</span>
+  </div>
+  <div id="cargas-lista"></div>
+</div>
+
+<div class="footer">
+  BotCarga &copy; 2026 - O Bot que Negocia Fretes por Voce<br>
+  <a href="#">Politica de Privacidade</a>
+</div>
+
+<script>
+// =============================================
+// CONFIGURACAO - Altere aqui
+// =============================================
+const CONFIG = {
+  // Seu numero do WhatsApp (com codigo do pais, sem +)
+  whatsappNumero: '5511977252175',
+  // Mensagem padrao (variaveis: {origem}, {destino}, {tipo}, {peso}, {veiculo}, {valor})
+  mensagemPadrao: 'Ola! Vi no BotCarga e tenho interesse na carga:\n\n' +
+    '📍 Origem: {origem}\n' +
+    '🏁 Destino: {destino}\n' +
+    '📦 Tipo: {tipo}\n' +
+    '⚖️ Peso: {peso}\n' +
+    '🚚 Veiculo: {veiculo}\n' +
+    '💰 Valor: R$ {valor}\n\n' +
+    'Gostaria de mais informacoes!'
+};
+
+// =============================================
+// CARGAS - Atualize este array com suas cargas
+// A extensao BotCarga gera este codigo automaticamente
+// =============================================
+const CARGAS = [
+  // EXEMPLO - substitua pelas suas cargas reais
+  {
+    id: '1',
+    origem: 'Guarulhos - SP',
+    destino: 'Rio de Janeiro - RJ',
+    tipoCarga: 'Carga seca paletizada',
+    peso: '18',
+    veiculo: 'Truck',
+    valor: '3.200,00',
+    dataColeta: '08/04/2026'
+  },
+  {
+    id: '2',
+    origem: 'Belo Horizonte - MG',
+    destino: 'Salvador - BA',
+    tipoCarga: 'Granel',
+    peso: '28',
+    veiculo: 'Carreta',
+    valor: '7.500,00',
+    dataColeta: '10/04/2026'
+  },
+  {
+    id: '3',
+    origem: 'Campinas - SP',
+    destino: 'Goiania - GO',
+    tipoCarga: 'Carga seca',
+    peso: '22',
+    veiculo: 'Truck',
+    valor: '5.100,00',
+    dataColeta: '09/04/2026'
+  },
+  {
+    id: '4',
+    origem: 'Curitiba - PR',
+    destino: 'Florianopolis - SC',
+    tipoCarga: 'Refrigerada',
+    peso: '15',
+    veiculo: 'Bitruck',
+    valor: '2.800,00',
+    dataColeta: '11/04/2026'
+  }
+];
+
+// =============================================
+// RENDER
+// =============================================
+function gerarLinkWhatsApp(carga) {
+  let msg = CONFIG.mensagemPadrao
+    .replace('{origem}', carga.origem || '')
+    .replace('{destino}', carga.destino || '')
+    .replace('{tipo}', carga.tipoCarga || 'Nao informado')
+    .replace('{peso}', carga.peso ? carga.peso + ' ton' : 'Nao informado')
+    .replace('{veiculo}', carga.veiculo || 'Nao informado')
+    .replace('{valor}', carga.valor || 'A combinar');
+
+  return `https://wa.me/${CONFIG.whatsappNumero}?text=${encodeURIComponent(msg)}`;
+}
+
+function renderCargas() {
+  const container = document.getElementById('cargas-lista');
+  const counter = document.getElementById('total-cargas');
+
+  counter.textContent = CARGAS.length;
+
+  if (CARGAS.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">&#x1F4E6;</div>
+        <p>Nenhuma carga disponivel no momento</p>
+        <p style="font-size:13px; margin-top:8px;">Volte mais tarde para conferir novas oportunidades</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = CARGAS.map(c => `
+    <div class="carga-card">
+      <div class="carga-rota">
+        &#x1F4CD; ${esc(c.origem)} <span class="arrow">&#x27A1;</span> &#x1F3C1; ${esc(c.destino)}
+      </div>
+      <div class="carga-info-grid">
+        ${c.tipoCarga ? `<div class="carga-info-item"><span class="carga-info-icon">&#x1F4E6;</span><span><span class="carga-info-label">Tipo:</span> ${esc(c.tipoCarga)}</span></div>` : ''}
+        ${c.peso ? `<div class="carga-info-item"><span class="carga-info-icon">&#x2696;&#xFE0F;</span><span><span class="carga-info-label">Peso:</span> ${esc(c.peso)} ton</span></div>` : ''}
+        ${c.veiculo ? `<div class="carga-info-item"><span class="carga-info-icon">&#x1F69A;</span><span><span class="carga-info-label">Veiculo:</span> ${esc(c.veiculo)}</span></div>` : ''}
+        ${c.dataColeta ? `<div class="carga-info-item"><span class="carga-info-icon">&#x1F4C5;</span><span><span class="carga-info-label">Coleta:</span> ${esc(c.dataColeta)}</span></div>` : ''}
+      </div>
+      ${c.valor ? `<div class="carga-valor">&#x1F4B0; R$ ${esc(c.valor)}</div>` : ''}
+      <a class="btn-interesse" href="${gerarLinkWhatsApp(c)}" target="_blank">
+        &#x1F4AC; Tenho Interesse nessa Carga
+      </a>
+    </div>
+  `).join('');
+}
+
+function esc(str) {
+  if (!str) return '';
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+renderCargas();
+</script>
+</body>
+</html>

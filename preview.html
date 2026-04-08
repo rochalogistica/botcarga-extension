@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BotCarga - Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111b21; display: flex; height: 100vh; }
+    .whatsapp-mock { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #8696a0; font-size: 14px; }
+    .whatsapp-mock .logo { font-size: 60px; margin-bottom: 16px; opacity: 0.5; }
+    .whatsapp-mock p { opacity: 0.5; }
+    #botcarga-sidebar { width: 380px; height: 100vh; background: #f0f2f5; border-left: 1px solid #d1d5db; display: flex; flex-direction: column; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
+    #botcarga-sidebar * { box-sizing: border-box; }
+    .bc-header { background: linear-gradient(135deg, #1a3a6b, #2563eb); color: white; padding: 14px 16px; display: flex; align-items: center; flex-shrink: 0; }
+    .bc-header-title { display: flex; align-items: center; gap: 10px; }
+    .bc-header h2 { font-size: 18px; font-weight: 800; letter-spacing: 1.5px; margin: 0; }
+    .bc-header-subtitle { font-size: 10px; opacity: 0.8; }
+    .bc-logo-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .bc-tabs { display: flex; background: white; border-bottom: 1px solid #e5e7eb; flex-shrink: 0; }
+    .bc-tab { flex: 1; padding: 10px 2px; border: none; background: none; cursor: pointer; font-size: 9px; font-weight: 600; color: #6b7280; text-align: center; position: relative; transition: color 0.2s; font-family: inherit; }
+    .bc-tab:hover { color: #2563eb; background: #f8fafc; }
+    .bc-tab.active { color: #2563eb; }
+    .bc-tab.active::after { content: ''; position: absolute; bottom: 0; left: 10%; width: 80%; height: 3px; background: #2563eb; border-radius: 3px 3px 0 0; }
+    .bc-tab-icon { display: block; font-size: 16px; margin-bottom: 2px; }
+    .bc-content { flex: 1; overflow-y: auto; padding: 12px; }
+    .bc-content::-webkit-scrollbar { width: 6px; }
+    .bc-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    .bc-panel { display: none; }
+    .bc-panel.active { display: block; }
+    .bc-search { position: relative; margin-bottom: 12px; }
+    .bc-search input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 13px; background: white; outline: none; font-family: inherit; }
+    .bc-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 14px; }
+    .bc-card { background: white; border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid #e5e7eb; transition: box-shadow 0.2s; }
+    .bc-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .bc-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .bc-card-name { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .bc-card-actions { display: flex; gap: 4px; }
+    .bc-card-info { display: flex; flex-direction: column; gap: 4px; }
+    .bc-card-detail { font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 6px; }
+    .bc-card-detail-icon { font-size: 13px; width: 18px; text-align: center; }
+    .bc-status { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .bc-status.aberta { background: #fef3c7; color: #92400e; }
+    .bc-status.coleta { background: #dbeafe; color: #1e40af; }
+    .bc-status.viagem { background: #d1fae5; color: #065f46; }
+    .bc-status.finalizada { background: #e5e7eb; color: #374151; }
+    .bc-btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-family: inherit; }
+    .bc-btn-primary { background: linear-gradient(135deg, #1a3a6b, #2563eb); color: white; }
+    .bc-btn-success { background: #10b981; color: white; }
+    .bc-btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+    .bc-btn-full { width: 100%; justify-content: center; }
+    .bc-btn-icon { width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; background: #f3f4f6; color: #6b7280; }
+    .bc-btn-icon.send { background: #dcfce7; color: #16a34a; }
+    .bc-btn-icon.edit { background: #dbeafe; color: #2563eb; }
+    .bc-btn-icon.delete { background: #fee2e2; color: #ef4444; }
+    .bc-form { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid #e5e7eb; }
+    .bc-form-title { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 12px; }
+    .bc-form-group { margin-bottom: 10px; }
+    .bc-form-group label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; }
+    .bc-form-group input, .bc-form-group select, .bc-form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; }
+    .bc-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .bc-form-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .bc-section { margin-bottom: 16px; }
+    .bc-kanban-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .bc-kanban-title { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 6px; }
+    .bc-kanban-count { background: #e5e7eb; color: #374151; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .bc-status-filters { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+    .bc-status-filter { padding: 6px 12px; border-radius: 20px; border: 1px solid #d1d5db; background: white; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 4px; }
+    .bc-status-filter.active { background: #2563eb; color: white; border-color: #2563eb; }
+    .bc-status-filter .count { background: rgba(0,0,0,0.1); padding: 1px 6px; border-radius: 10px; font-size: 10px; }
+    .bc-status-filter.active .count { background: rgba(255,255,255,0.3); }
+    .bc-cargo-preview { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; margin-top: 8px; font-size: 12px; color: #374151; line-height: 1.6; white-space: pre-line; }
+    .bc-cargo-preview-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .bc-toast { position: fixed; bottom: 20px; right: 400px; background: #1a1a2e; color: white; padding: 12px 20px; border-radius: 10px; font-size: 13px; z-index: 10002; animation: bcSlideIn 0.3s ease; }
+    @keyframes bcSlideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+
+<div class="whatsapp-mock">
+  <div class="logo">&#x1F4AC;</div>
+  <p>WhatsApp Web</p>
+  <p style="font-size:12px; margin-top:8px;">Sidebar BotCarga &#x27A1;</p>
+</div>
+
+<div id="botcarga-sidebar">
+  <div class="bc-header" style="justify-content:space-between;">
+    <div class="bc-header-title">
+      <div class="bc-logo-icon">&#x1F69A;</div>
+      <div>
+        <h2>BOTCARGA</h2>
+        <div class="bc-header-subtitle">Negocie fretes com agilidade</div>
+      </div>
+    </div>
+    <div id="bc-colab-selector" style="position:relative;">
+      <button id="bc-colab-btn" onclick="toggleColabDropdown()" style="
+        background:rgba(255,255,255,0.2); border:none; border-radius:8px; padding:6px 10px;
+        color:white; font-size:11px; font-weight:600; cursor:pointer; font-family:inherit;
+        display:flex; align-items:center; gap:4px; white-space:nowrap;
+      ">
+        <span id="bc-colab-nome">&#x1F7E2; Luiz</span>
+        <span style="font-size:8px;">&#x25BC;</span>
+      </button>
+      <div id="bc-colab-dropdown" style="
+        display:none; position:absolute; top:100%; right:0; margin-top:4px;
+        background:white; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.15);
+        min-width:200px; z-index:10003; overflow:hidden;
+      ">
+        <div style="padding:10px 12px; border-bottom:1px solid #e5e7eb; font-size:11px; font-weight:700; color:#374151;">&#x1F465; Selecionar Colaborador</div>
+        <div style="padding:8px 12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #f0f2f5; background:#ecfdf5;">
+          <div>
+            <div style="font-size:12px; font-weight:600; color:#1a1a2e;">&#x1F7E2; Luiz Souza</div>
+            <div style="font-size:10px; color:#6b7280;">Gerente | &#x1F4F1; 5511977252175</div>
+          </div>
+          <span style="font-size:10px; color:#059669; font-weight:600;">Ativo</span>
+        </div>
+        <div style="padding:8px 12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #f0f2f5;">
+          <div>
+            <div style="font-size:12px; font-weight:600; color:#1a1a2e;">&#x26AA; Carlos Silva</div>
+            <div style="font-size:10px; color:#6b7280;">Operador | &#x1F4F1; 5521988776655</div>
+          </div>
+        </div>
+        <div style="padding:8px 12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #f0f2f5;">
+          <div>
+            <div style="font-size:12px; font-weight:600; color:#1a1a2e;">&#x26AA; Ana Oliveira</div>
+            <div style="font-size:10px; color:#6b7280;">Supervisor | &#x1F4F1; 5531999887766</div>
+          </div>
+        </div>
+        <div style="padding:8px 12px; border-top:1px solid #e5e7eb;">
+          <button class="bc-btn bc-btn-sm bc-btn-primary" style="width:100%; font-size:10px;">&#x2795; Novo Colaborador</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bc-tabs">
+    <button class="bc-tab active" data-tab="dashboard"><span class="bc-tab-icon">&#x1F4CA;</span>Dash</button>
+    <button class="bc-tab" data-tab="motoristas"><span class="bc-tab-icon">&#x1F464;</span>Motor.</button>
+    <button class="bc-tab" data-tab="cargas"><span class="bc-tab-icon">&#x1F4E6;</span>Cargas</button>
+    <button class="bc-tab" data-tab="kanban"><span class="bc-tab-icon">&#x1F4CB;</span>Kanban</button>
+    <button class="bc-tab" data-tab="disparos"><span class="bc-tab-icon">&#x1F4E2;</span>Disparos</button>
+  </div>
+
+  <div class="bc-content">
+
+    <!-- ========== DASHBOARD GERAL ========== -->
+    <div class="bc-panel active" id="bc-panel-dashboard">
+
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+        <div style="font-size:14px; font-weight:700; color:#1a1a2e;">&#x1F4CA; Dashboard</div>
+        <button class="bc-btn bc-btn-sm" style="background:#e5e7eb; color:#374151;">&#x1F504;</button>
+      </div>
+
+      <!-- Toggle -->
+      <div style="display:flex; gap:4px; margin-bottom:12px; background:white; border-radius:10px; padding:4px; border:1px solid #e5e7eb;">
+        <button class="bc-dash-toggle" data-view="geral" onclick="switchDash('geral')" id="btn-geral" style="flex:1; padding:8px; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; background:linear-gradient(135deg,#1a3a6b,#2563eb); color:white;">&#x1F3E2; Operacao Geral</button>
+        <button class="bc-dash-toggle" data-view="colaborador" onclick="switchDash('colaborador')" id="btn-colab" style="flex:1; padding:8px; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; background:transparent; color:#6b7280;">&#x1F464; Por Colaborador</button>
+      </div>
+
+      <!-- Filtro periodo -->
+      <div style="display:flex; gap:4px; margin-bottom:12px;">
+        <button class="periodo-btn active" style="padding:4px 10px; border-radius:6px; border:1px solid #2563eb; font-size:10px; font-weight:600; cursor:pointer; background:#2563eb; color:white;">Todos</button>
+        <button class="periodo-btn" style="padding:4px 10px; border-radius:6px; border:1px solid #d1d5db; font-size:10px; font-weight:600; cursor:pointer; background:white; color:#6b7280;">Hoje</button>
+        <button class="periodo-btn" style="padding:4px 10px; border-radius:6px; border:1px solid #d1d5db; font-size:10px; font-weight:600; cursor:pointer; background:white; color:#6b7280;">7 dias</button>
+        <button class="periodo-btn" style="padding:4px 10px; border-radius:6px; border:1px solid #d1d5db; font-size:10px; font-weight:600; cursor:pointer; background:white; color:#6b7280;">30 dias</button>
+      </div>
+
+      <!-- CONTEUDO GERAL -->
+      <div id="dash-geral">
+        <!-- KPIs -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+          <div style="background:linear-gradient(135deg,#1a3a6b,#2563eb); border-radius:12px; padding:14px; color:white;">
+            <div style="font-size:10px; opacity:0.8;">Valor Total em Cargas</div>
+            <div style="font-size:22px; font-weight:800; margin-top:4px;">R$ 45.300,00</div>
+            <div style="font-size:10px; opacity:0.7; margin-top:2px;">12 cargas no periodo</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#059669,#10b981); border-radius:12px; padding:14px; color:white;">
+            <div style="font-size:10px; opacity:0.8;">Faturamento (Finalizadas)</div>
+            <div style="font-size:22px; font-weight:800; margin-top:4px;">R$ 18.700,00</div>
+            <div style="font-size:10px; opacity:0.7; margin-top:2px;">4 cargas finalizadas</div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:12px;">
+          <div style="background:white; border:1px solid #e5e7eb; border-radius:10px; padding:10px; text-align:center;">
+            <div style="font-size:22px; font-weight:800; color:#2563eb;">12</div>
+            <div style="font-size:10px; color:#6b7280; font-weight:600;">&#x1F4E6; Cargas</div>
+          </div>
+          <div style="background:white; border:1px solid #e5e7eb; border-radius:10px; padding:10px; text-align:center;">
+            <div style="font-size:22px; font-weight:800; color:#7c3aed;">38</div>
+            <div style="font-size:10px; color:#6b7280; font-weight:600;">&#x1F464; Motoristas</div>
+          </div>
+          <div style="background:white; border:1px solid #e5e7eb; border-radius:10px; padding:10px; text-align:center;">
+            <div style="font-size:22px; font-weight:800; color:#f59e0b;">15</div>
+            <div style="font-size:10px; color:#6b7280; font-weight:600;">&#x1F64B; Interessados</div>
+          </div>
+        </div>
+
+        <!-- Pipeline Visual -->
+        <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:10px;">&#x1F4CA; Pipeline de Cargas</div>
+          <div style="display:flex; border-radius:6px; overflow:hidden; height:12px; background:#e5e7eb;">
+            <div style="width:25%; background:#fbbf24;" title="Abertas: 3"></div>
+            <div style="width:17%; background:#3b82f6;" title="Coleta: 2"></div>
+            <div style="width:25%; background:#10b981;" title="Viagem: 3"></div>
+            <div style="width:33%; background:#6b7280;" title="Finalizadas: 4"></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; margin-top:8px;">
+            <div style="text-align:center;"><div style="font-size:14px; font-weight:700; color:#92400e;">3</div><div style="font-size:9px; color:#6b7280;">&#x1F7E1; Abertas</div></div>
+            <div style="text-align:center;"><div style="font-size:14px; font-weight:700; color:#1e40af;">2</div><div style="font-size:9px; color:#6b7280;">&#x1F535; Coleta</div></div>
+            <div style="text-align:center;"><div style="font-size:14px; font-weight:700; color:#065f46;">3</div><div style="font-size:9px; color:#6b7280;">&#x1F7E2; Viagem</div></div>
+            <div style="text-align:center;"><div style="font-size:14px; font-weight:700; color:#374151;">4</div><div style="font-size:9px; color:#6b7280;">&#x26AA; Final.</div></div>
+          </div>
+        </div>
+
+        <!-- Conversao -->
+        <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:8px;">&#x1F3AF; Conversao</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div style="text-align:center; padding:8px; background:#f8fafc; border-radius:8px;">
+              <div style="font-size:24px; font-weight:800; color:#059669;">27%</div>
+              <div style="font-size:10px; color:#6b7280;">Interessado &#x27A1; Fechado</div>
+            </div>
+            <div style="text-align:center; padding:8px; background:#f8fafc; border-radius:8px;">
+              <div style="font-size:24px; font-weight:800; color:#2563eb;">33%</div>
+              <div style="font-size:10px; color:#6b7280;">Cargas Fechadas</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Etiquetas -->
+        <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:8px;">&#x1F3F7;&#xFE0F; Motoristas por Etiqueta</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            <span style="background:#fef3c7; color:#92400e; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600;">Novo: 12</span>
+            <span style="background:#dbeafe; color:#1e40af; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600;">Negociando: 8</span>
+            <span style="background:#d1fae5; color:#065f46; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600;">Fechado: 10</span>
+            <span style="background:#fce7f3; color:#9d174d; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600;">VIP: 5</span>
+            <span style="background:#e5e7eb; color:#374151; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600;">Inativo: 3</span>
+          </div>
+        </div>
+
+        <!-- Top Rotas -->
+        <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:8px;">&#x1F5FA;&#xFE0F; Top Rotas</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f0f2f5;"><div style="display:flex; align-items:center; gap:6px;"><span style="background:#fef3c7; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;">1</span><span style="font-size:11px;">SP - SP &#x27A1; RJ - RJ</span></div><span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600;">5</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f0f2f5;"><div style="display:flex; align-items:center; gap:6px;"><span style="background:#f3f4f6; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;">2</span><span style="font-size:11px;">MG - MG &#x27A1; BA - BA</span></div><span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600;">3</span></div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0;"><div style="display:flex; align-items:center; gap:6px;"><span style="background:#f3f4f6; width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;">3</span><span style="font-size:11px;">PR - PR &#x27A1; SC - SC</span></div><span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600;">2</span></div>
+        </div>
+
+        <!-- Frota -->
+        <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:8px;">&#x1F69A; Frota por Veiculo</div>
+          <div style="margin-bottom:6px;"><div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;"><span style="color:#374151; font-weight:600;">Carreta</span><span style="color:#6b7280;">14 (37%)</span></div><div style="background:#e5e7eb; border-radius:4px; height:6px;"><div style="background:linear-gradient(90deg,#2563eb,#7c3aed); height:100%; border-radius:4px; width:37%;"></div></div></div>
+          <div style="margin-bottom:6px;"><div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;"><span style="color:#374151; font-weight:600;">Truck</span><span style="color:#6b7280;">10 (26%)</span></div><div style="background:#e5e7eb; border-radius:4px; height:6px;"><div style="background:linear-gradient(90deg,#2563eb,#7c3aed); height:100%; border-radius:4px; width:26%;"></div></div></div>
+          <div style="margin-bottom:6px;"><div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;"><span style="color:#374151; font-weight:600;">Bitruck</span><span style="color:#6b7280;">8 (21%)</span></div><div style="background:#e5e7eb; border-radius:4px; height:6px;"><div style="background:linear-gradient(90deg,#2563eb,#7c3aed); height:100%; border-radius:4px; width:21%;"></div></div></div>
+          <div><div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:2px;"><span style="color:#374151; font-weight:600;">Toco</span><span style="color:#6b7280;">6 (16%)</span></div><div style="background:#e5e7eb; border-radius:4px; height:6px;"><div style="background:linear-gradient(90deg,#2563eb,#7c3aed); height:100%; border-radius:4px; width:16%;"></div></div></div>
+        </div>
+
+        <!-- Ranking Colaboradores -->
+        <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:8px;">&#x1F3C6; Ranking Colaboradores</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0;">
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">&#x1F947;</span><div><div style="font-size:12px; font-weight:600; color:#1a1a2e;">Luiz Souza</div><div style="font-size:10px; color:#6b7280;">5 cargas | 3 fechadas</div></div></div>
+            <div style="font-size:13px; font-weight:700; color:#059669;">R$ 12.500,00</div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid #f0f2f5;">
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">&#x1F948;</span><div><div style="font-size:12px; font-weight:600; color:#1a1a2e;">Maria Silva</div><div style="font-size:10px; color:#6b7280;">4 cargas | 1 fechada</div></div></div>
+            <div style="font-size:13px; font-weight:700; color:#059669;">R$ 4.200,00</div>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid #f0f2f5;">
+            <div style="display:flex; align-items:center; gap:8px;"><span style="font-size:16px;">&#x1F949;</span><div><div style="font-size:12px; font-weight:600; color:#1a1a2e;">Pedro Santos</div><div style="font-size:10px; color:#6b7280;">3 cargas | 0 fechadas</div></div></div>
+            <div style="font-size:13px; font-weight:700; color:#059669;">R$ 0,00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTEUDO COLABORADOR -->
+      <div id="dash-colab" style="display:none;">
+        <!-- Seletor equipe -->
+        <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+            <div style="font-size:12px; font-weight:700; color:#374151;">&#x1F465; Equipe</div>
+            <button class="bc-btn bc-btn-sm bc-btn-primary" style="font-size:10px; padding:3px 8px;" onclick="showToast('Formulario novo colaborador')">&#x2795; Novo</button>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button onclick="selectColab(this)" class="colab-chip selected" style="padding:6px 12px; border-radius:20px; border:2px solid #2563eb; font-size:11px; font-weight:600; cursor:pointer; background:#2563eb; color:white;">&#x1F464; Luiz Souza</button>
+            <button onclick="selectColab(this)" class="colab-chip" style="padding:6px 12px; border-radius:20px; border:2px solid #e5e7eb; font-size:11px; font-weight:600; cursor:pointer; background:white; color:#374151;">&#x1F464; Maria Silva</button>
+            <button onclick="selectColab(this)" class="colab-chip" style="padding:6px 12px; border-radius:20px; border:2px solid #e5e7eb; font-size:11px; font-weight:600; cursor:pointer; background:white; color:#374151;">&#x1F464; Pedro Santos</button>
+          </div>
+        </div>
+
+        <!-- Header colaborador -->
+        <div style="background:linear-gradient(135deg,#1a3a6b,#2563eb); border-radius:12px; padding:16px; color:white; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+            <div style="width:40px; height:40px; background:rgba(255,255,255,0.2); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px;">&#x1F464;</div>
+            <div>
+              <div style="font-size:16px; font-weight:800;">Luiz Souza</div>
+              <div style="font-size:11px; opacity:0.8;">Gerente | Desde 01/03/2026</div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div style="background:rgba(255,255,255,0.15); border-radius:8px; padding:8px; text-align:center;">
+              <div style="font-size:18px; font-weight:800;">R$ 12.500</div>
+              <div style="font-size:9px; opacity:0.8;">Faturamento</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.15); border-radius:8px; padding:8px; text-align:center;">
+              <div style="font-size:18px; font-weight:800;">3</div>
+              <div style="font-size:9px; opacity:0.8;">Cargas Fechadas</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPIs individuais -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; margin-bottom:12px;">
+          <div style="background:white; border:1px solid #e5e7eb; border-radius:8px; padding:8px; text-align:center;">
+            <div style="font-size:18px; font-weight:700; color:#2563eb;">5</div>
+            <div style="font-size:9px; color:#6b7280;">&#x1F4E6; Cargas</div>
+          </div>
+          <div style="background:white; border:1px solid #e5e7eb; border-radius:8px; padding:8px; text-align:center;">
+            <div style="font-size:18px; font-weight:700; color:#7c3aed;">18</div>
+            <div style="font-size:9px; color:#6b7280;">&#x1F464; Motoristas</div>
+          </div>
+          <div style="background:white; border:1px solid #e5e7eb; border-radius:8px; padding:8px; text-align:center;">
+            <div style="font-size:18px; font-weight:700; color:#f59e0b;">9</div>
+            <div style="font-size:9px; color:#6b7280;">&#x1F64B; Interest.</div>
+          </div>
+          <div style="background:white; border:1px solid #e5e7eb; border-radius:8px; padding:8px; text-align:center;">
+            <div style="font-size:18px; font-weight:700; color:#10b981;">24</div>
+            <div style="font-size:9px; color:#6b7280;">&#x1F4E2; Disparos</div>
+          </div>
+        </div>
+
+        <!-- Pipeline individual -->
+        <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:8px;">&#x1F4CA; Pipeline Individual</div>
+          <div style="display:flex; border-radius:6px; overflow:hidden; height:12px; background:#e5e7eb;">
+            <div style="width:20%; background:#fbbf24;"></div>
+            <div style="width:20%; background:#3b82f6;"></div>
+            <div style="width:0%; background:#10b981;"></div>
+            <div style="width:60%; background:#6b7280;"></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; margin-top:8px;">
+            <div style="text-align:center; font-size:10px; color:#6b7280;">&#x1F7E1; 1</div>
+            <div style="text-align:center; font-size:10px; color:#6b7280;">&#x1F535; 1</div>
+            <div style="text-align:center; font-size:10px; color:#6b7280;">&#x1F7E2; 0</div>
+            <div style="text-align:center; font-size:10px; color:#6b7280;">&#x26AA; 3</div>
+          </div>
+        </div>
+
+        <!-- Ultimas cargas -->
+        <div style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:12px; font-weight:700; color:#374151; margin-bottom:8px;">&#x1F4CB; Ultimas Cargas</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f0f2f5;">
+            <div><div style="font-size:11px; font-weight:600; color:#1a1a2e;">SP - SP &#x27A1; RJ - RJ</div><div style="font-size:10px; color:#059669; font-weight:600;">R$ 4.500,00</div></div>
+            <span style="background:#e5e7eb; color:#374151; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600;">&#x26AA; finalizada</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f0f2f5;">
+            <div><div style="font-size:11px; font-weight:600; color:#1a1a2e;">SP - SP &#x27A1; MG - MG</div><div style="font-size:10px; color:#059669; font-weight:600;">R$ 3.800,00</div></div>
+            <span style="background:#e5e7eb; color:#374151; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600;">&#x26AA; finalizada</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0; border-bottom:1px solid #f0f2f5;">
+            <div><div style="font-size:11px; font-weight:600; color:#1a1a2e;">RJ - RJ &#x27A1; BA - BA</div><div style="font-size:10px; color:#059669; font-weight:600;">R$ 6.200,00</div></div>
+            <span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600;">&#x1F535; coleta</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 0;">
+            <div><div style="font-size:11px; font-weight:600; color:#1a1a2e;">PR - PR &#x27A1; SC - SC</div><div style="font-size:10px; color:#059669; font-weight:600;">R$ 2.800,00</div></div>
+            <span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:600;">&#x1F7E1; aberta</span>
+          </div>
+        </div>
+
+        <!-- Acoes -->
+        <div style="display:flex; gap:6px;">
+          <button class="bc-btn bc-btn-sm" style="flex:1; background:#dbeafe; color:#1e40af;" onclick="showToast('Editar colaborador')">&#x270F;&#xFE0F; Editar</button>
+          <button class="bc-btn bc-btn-sm" style="flex:1; background:#fee2e2; color:#ef4444;" onclick="showToast('Remover colaborador')">&#x1F5D1;&#xFE0F; Remover</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ABA MOTORISTAS ========== -->
+    <div class="bc-panel" id="bc-panel-motoristas">
+      <div class="bc-search"><span class="bc-search-icon">&#x1F50D;</span><input type="text" placeholder="Buscar motorista por nome ou rota..."></div>
+      <button class="bc-btn bc-btn-primary bc-btn-full">+ Novo Motorista</button>
+      <div style="margin-top:12px;">
+        <div class="bc-card"><div class="bc-card-header"><div class="bc-card-name">Carlos Oliveira</div><div class="bc-card-actions"><button class="bc-btn-icon send">&#x1F4AC;</button><button class="bc-btn-icon edit">&#x270F;&#xFE0F;</button><button class="bc-btn-icon delete">&#x1F5D1;&#xFE0F;</button></div></div><span class="bc-status coleta" style="margin-left:4px;font-size:10px;">Negociando</span><div class="bc-card-info"><div class="bc-card-detail"><span class="bc-card-detail-icon">&#x1F4F1;</span>(11) 98765-4321</div><div class="bc-card-detail"><span class="bc-card-detail-icon">&#x1F69A;</span>Carreta - Sider</div><div class="bc-card-detail"><span class="bc-card-detail-icon">&#x1F5FA;&#xFE0F;</span>SP - RJ</div><div class="bc-card-detail"><span class="bc-card-detail-icon">&#x1F30E;</span>Sudeste</div></div></div>
+        <div class="bc-card"><div class="bc-card-header"><div class="bc-card-name">Joao Santos</div><div class="bc-card-actions"><button class="bc-btn-icon send">&#x1F4AC;</button><button class="bc-btn-icon edit">&#x270F;&#xFE0F;</button><button class="bc-btn-icon delete">&#x1F5D1;&#xFE0F;</button></div></div><span class="bc-status aberta" style="margin-left:4px;font-size:10px;">Novo</span><div class="bc-card-info"><div class="bc-card-detail"><span class="bc-card-detail-icon">&#x1F4F1;</span>(31) 91234-5678</div><div class="bc-card-detail"><span class="bc-card-detail-icon">&#x1F69A;</span>Truck - Bau</div><div class="bc-card-detail"><span class="bc-card-detail-icon">&#x1F5FA;&#xFE0F;</span>MG - BA</div><div class="bc-card-detail"><span class="bc-card-detail-icon">&#x1F30E;</span>Sudeste</div></div></div>
+      </div>
+    </div>
+
+    <!-- ========== ABA CARGAS ========== -->
+    <div class="bc-panel" id="bc-panel-cargas">
+      <!-- Toggle Minhas / Todas -->
+      <div style="display:flex; gap:4px; margin-bottom:10px; background:white; border-radius:8px; padding:3px; border:1px solid #e5e7eb;">
+        <button style="flex:1; padding:6px; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; font-family:inherit; background:#2563eb; color:white;">&#x1F464; Minhas Cargas</button>
+        <button style="flex:1; padding:6px; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; font-family:inherit; background:transparent; color:#6b7280;">&#x1F3E2; Todas da Operacao</button>
+      </div>
+      <button class="bc-btn bc-btn-primary bc-btn-full">+ Nova Carga</button>
+      <div style="display:flex; gap:6px; margin-top:8px; margin-bottom:12px;">
+        <button class="bc-btn bc-btn-success bc-btn-sm" style="flex:1;">&#x1F4C4; Exportar Landing</button>
+        <button class="bc-btn bc-btn-sm" style="flex:1; background:#6366f1; color:white;">&#x1F4CB; Copiar HTML</button>
+      </div>
+      <div class="bc-status-filters">
+        <button class="bc-status-filter active">Todas <span class="count">4</span></button>
+        <button class="bc-status-filter">&#x1F7E1; Abertas <span class="count">2</span></button>
+        <button class="bc-status-filter">&#x1F535; Coleta <span class="count">1</span></button>
+        <button class="bc-status-filter">&#x1F7E2; Viagem <span class="count">1</span></button>
+      </div>
+      <div class="bc-card">
+        <div class="bc-card-header"><div><div class="bc-card-name">SP - SP &#x27A1; RJ - RJ</div><div style="display:flex; align-items:center; gap:6px; margin-top:4px;"><span class="bc-status aberta">&#x1F7E1; Aberta</span><button onclick="toggleInteressados('c1')" style="display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:600; border:none; cursor:pointer; background:#dcfce7; color:#16a34a;">&#x1F64B; 3 interessados</button></div></div><div class="bc-card-actions"><button class="bc-btn-icon" style="background:#dcfce7; color:#16a34a; font-size:12px;">&#x2795;</button><button class="bc-btn-icon edit">&#x270F;&#xFE0F;</button></div></div>
+        <div id="interessados-c1" style="display:none;"><div style="background:white; border:1px solid #d1fae5; border-radius:8px; margin:8px 0; overflow:hidden;"><div style="background:#ecfdf5; padding:8px 12px; font-size:12px; font-weight:700; color:#065f46;">&#x1F64B; 3 Interessados</div><div style="padding:8px 12px; border-bottom:1px solid #f0f2f5; display:flex; align-items:center; justify-content:space-between; cursor:pointer;"><div><div style="font-size:13px; font-weight:600;">Carlos Oliveira</div><div style="font-size:11px; color:#6b7280;">&#x1F4F1; (11) 98765-4321 &#x1F69A; Carreta</div></div><button class="bc-btn-icon send" style="width:30px; height:30px;">&#x1F4AC;</button></div><div style="padding:8px 12px; border-bottom:1px solid #f0f2f5; display:flex; align-items:center; justify-content:space-between; cursor:pointer;"><div><div style="font-size:13px; font-weight:600;">Ana Ferreira</div><div style="font-size:11px; color:#6b7280;">&#x1F4F1; (21) 97654-3210 &#x1F69A; Truck</div></div><button class="bc-btn-icon send" style="width:30px; height:30px;">&#x1F4AC;</button></div><div style="padding:8px 12px; display:flex; align-items:center; justify-content:space-between; cursor:pointer;"><div><div style="font-size:13px; font-weight:600;">Roberto Lima</div><div style="font-size:11px; color:#6b7280;">&#x1F4F1; (19) 96543-2109 &#x1F69A; Carreta</div></div><button class="bc-btn-icon send" style="width:30px; height:30px;">&#x1F4AC;</button></div></div></div>
+        <div class="bc-card-info"><div class="bc-card-detail"><span class="bc-card-detail-icon">&#x1F4E6;</span>Carga seca</div><div class="bc-card-detail"><span class="bc-card-detail-icon">&#x1F4B0;</span>R$ 4.500,00</div></div>
+      </div>
+    </div>
+
+    <!-- ========== ABA KANBAN ========== -->
+    <div class="bc-panel" id="bc-panel-kanban">
+      <div style="font-size:14px; font-weight:700; color:#1a1a2e; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+        &#x1F4CB; Pipeline de Cargas
+        <button class="bc-btn bc-btn-sm" style="background:#e5e7eb; color:#374151; margin-left:auto;">&#x1F504; Atualizar</button>
+      </div>
+      <!-- Toggle Minhas / Todas -->
+      <div style="display:flex; gap:4px; margin-bottom:10px; background:white; border-radius:8px; padding:3px; border:1px solid #e5e7eb;">
+        <button style="flex:1; padding:6px; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; font-family:inherit; background:#2563eb; color:white;">&#x1F464; Minhas</button>
+        <button style="flex:1; padding:6px; border:none; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; font-family:inherit; background:transparent; color:#6b7280;">&#x1F3E2; Todas</button>
+      </div>
+      <!-- Stats -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; margin-bottom:12px;">
+        <div style="background:white; border:1px solid #e5e7eb; border-radius:10px; padding:10px; text-align:center;"><div style="font-size:20px; font-weight:800; color:#2563eb;">4</div><div style="font-size:10px; color:#6b7280; font-weight:600;">Total</div></div>
+        <div style="background:#fef3c7; border:1px solid #fcd34d; border-radius:10px; padding:10px; text-align:center;"><div style="font-size:20px; font-weight:800; color:#92400e;">2</div><div style="font-size:10px; color:#92400e; font-weight:600;">Abertas</div></div>
+        <div style="background:#dbeafe; border:1px solid #93c5fd; border-radius:10px; padding:10px; text-align:center;"><div style="font-size:20px; font-weight:800; color:#1e40af;">1</div><div style="font-size:10px; color:#1e40af; font-weight:600;">Andamento</div></div>
+        <div style="background:#d1fae5; border:1px solid #6ee7b7; border-radius:10px; padding:10px; text-align:center;"><div style="font-size:20px; font-weight:800; color:#065f46;">1</div><div style="font-size:10px; color:#065f46; font-weight:600;">Finalizadas</div></div>
+      </div>
+      <div class="bc-section"><div class="bc-kanban-header"><div class="bc-kanban-title">&#x1F7E1; Abertas <span class="bc-kanban-count">2</span></div></div>
+        <div class="bc-card" style="border-left:4px solid #92400e; margin-bottom:8px;"><div style="display:flex; justify-content:space-between;"><div class="bc-card-name" style="font-size:13px;">&#x1F4CD; SP &#x27A1; &#x1F3C1; RJ</div><span style="background:#dcfce7; color:#16a34a; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:600;">&#x1F64B; 3</span></div><div style="font-size:16px; font-weight:800; color:#059669; margin:4px 0;">&#x1F4B0; R$ 4.500</div><div style="display:flex; gap:4px; margin-top:6px;"><button class="bc-btn bc-btn-sm bc-btn-primary" style="flex:1;">&#x27A1; Avancar</button><button class="bc-btn bc-btn-sm bc-btn-success" style="flex:1;">&#x1F4AC; Enviar</button></div></div>
+      </div>
+    </div>
+
+    <!-- ========== ABA DISPAROS ========== -->
+    <div class="bc-panel" id="bc-panel-disparos">
+      <div style="font-size:14px; font-weight:700; color:#1a1a2e; margin-bottom:12px;">&#x1F4E2; Disparo de Mensagens</div>
+      <div class="bc-form" style="padding:12px; margin-bottom:10px;"><div class="bc-form-title">&#x1F4E6; Selecionar Carga</div><select style="width:100%; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:13px;"><option>-- Selecione uma carga aberta --</option><option selected>SP &#x27A1; RJ - R$ 4.500</option></select></div>
+      <div class="bc-form" style="padding:12px;"><div class="bc-form-title">&#x1F50D; Filtrar Motoristas</div><div class="bc-form-row"><div class="bc-form-group"><label>Veiculo</label><select style="width:100%; padding:6px; border:1px solid #d1d5db; border-radius:6px; font-size:12px;"><option>Todos</option><option selected>Carreta</option></select></div><div class="bc-form-group"><label>Regiao</label><select style="width:100%; padding:6px; border:1px solid #d1d5db; border-radius:6px; font-size:12px;"><option>Todas</option><option selected>Sudeste</option></select></div></div><button class="bc-btn bc-btn-primary bc-btn-sm" style="margin-top:8px; width:100%;">&#x1F50D; Filtrar</button></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Tab switching
+  document.querySelectorAll('.bc-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.bc-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.bc-panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('bc-panel-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Colaborador dropdown
+  function toggleColabDropdown() {
+    const dd = document.getElementById('bc-colab-dropdown');
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+  }
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#bc-colab-selector')) {
+      document.getElementById('bc-colab-dropdown').style.display = 'none';
+    }
+  });
+
+  // Dashboard toggle
+  function switchDash(view) {
+    document.getElementById('dash-geral').style.display = view === 'geral' ? 'block' : 'none';
+    document.getElementById('dash-colab').style.display = view === 'colaborador' ? 'block' : 'none';
+    document.getElementById('btn-geral').style.background = view === 'geral' ? 'linear-gradient(135deg,#1a3a6b,#2563eb)' : 'transparent';
+    document.getElementById('btn-geral').style.color = view === 'geral' ? 'white' : '#6b7280';
+    document.getElementById('btn-colab').style.background = view === 'colaborador' ? 'linear-gradient(135deg,#1a3a6b,#2563eb)' : 'transparent';
+    document.getElementById('btn-colab').style.color = view === 'colaborador' ? 'white' : '#6b7280';
+  }
+
+  // Colab selection
+  function selectColab(el) {
+    document.querySelectorAll('.colab-chip').forEach(c => {
+      c.style.background = 'white'; c.style.color = '#374151'; c.style.borderColor = '#e5e7eb';
+      c.classList.remove('selected');
+    });
+    el.style.background = '#2563eb'; el.style.color = 'white'; el.style.borderColor = '#2563eb';
+    el.classList.add('selected');
+    showToast('Carregando dados de ' + el.textContent.trim().replace('&#x1F464; ', ''));
+  }
+
+  // Toggle interessados
+  function toggleInteressados(id) {
+    const el = document.getElementById('interessados-' + id);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+
+  // Toast
+  function showToast(msg) {
+    const existing = document.querySelector('.bc-toast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = 'bc-toast';
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+  }
+</script>
+</body>
+</html>
