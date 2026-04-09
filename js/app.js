@@ -5,26 +5,23 @@
 (function() {
   'use strict';
 
-  // Aguarda o WhatsApp Web carregar completamente (lista de chats visivel)
-  let waitAttempts = 0;
-  function waitForWhatsApp() {
-    waitAttempts++;
+  // Aguarda o WhatsApp Web CONECTAR completamente (chats visiveis)
+  // NAO injeta nada antes disso para nao interferir no QR code / conexao
+  function waitForFullConnection() {
+    // Busca elementos que so existem DEPOIS de conectar o celular
+    const paneSide = document.querySelector('#pane-side');
+    const chatList = document.querySelector('[aria-label="Lista de conversas"]')
+      || document.querySelector('[aria-label="Chat list"]')
+      || document.querySelector('[data-tab="3"]');
+    const mainHeader = document.querySelector('header span[data-icon="menu"]')
+      || document.querySelector('header span[data-icon="search"]');
 
-    // Verifica se a lista de conversas ou o painel principal ja carregou
-    const chatList = document.querySelector('[data-tab="3"]')       // search box
-      || document.querySelector('div[aria-label="Chat list"]')       // chat list
-      || document.querySelector('#pane-side')                        // side pane
-      || document.querySelector('header');                           // header do whatsapp
-
-    if (chatList) {
-      // Aguarda mais 2s para garantir que tudo carregou
-      setTimeout(initBotCarga, 2000);
-    } else if (waitAttempts > 120) {
-      // Depois de 2 min, inicia mesmo assim (modo offline/lento)
-      console.log('[BotCarga] Timeout esperando WhatsApp, iniciando mesmo assim...');
-      initBotCarga();
+    if (paneSide || (chatList && mainHeader)) {
+      console.log('[BotCarga] WhatsApp conectado! Iniciando em 3s...');
+      setTimeout(initBotCarga, 3000);
     } else {
-      setTimeout(waitForWhatsApp, 1000);
+      // Verifica a cada 3s sem interferir
+      setTimeout(waitForFullConnection, 3000);
     }
   }
 
@@ -32,7 +29,7 @@
     // Evita inicialização duplicada
     if (document.getElementById('botcarga-sidebar')) return;
 
-    console.log('[BotCarga] Inicializando...');
+    console.log('[BotCarga] Inicializando modulos...');
 
     // Inicializa módulos na ordem correta
     BotCargaSidebar.init();
@@ -42,29 +39,16 @@
     BotCargaKanban.init();
     BotCargaDisparo.init();
 
-    // Aplica resize no WhatsApp somente quando conectado (chat list visivel)
-    waitForConnected();
+    // Ajusta layout do WhatsApp
+    document.body.classList.add('botcarga-ready');
 
     console.log('[BotCarga] Pronto!');
   }
 
-  function waitForConnected() {
-    const chatList = document.querySelector('#pane-side')
-      || document.querySelector('[data-tab="3"]')
-      || document.querySelector('div[aria-label="Chat list"]');
-
-    if (chatList) {
-      document.body.classList.add('botcarga-ready');
-      console.log('[BotCarga] WhatsApp conectado, layout ajustado.');
-    } else {
-      setTimeout(waitForConnected, 2000);
-    }
-  }
-
-  // Inicia quando o DOM estiver pronto
+  // Inicia monitoramento quando o DOM estiver pronto
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    waitForWhatsApp();
+    waitForFullConnection();
   } else {
-    document.addEventListener('DOMContentLoaded', waitForWhatsApp);
+    document.addEventListener('DOMContentLoaded', waitForFullConnection);
   }
 })();

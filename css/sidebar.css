@@ -632,16 +632,9 @@
   to { transform: translateY(20px); opacity: 0; }
 }
 
-/* WhatsApp Web layout adjustment - classe aplicada somente apos conexao */
+/* WhatsApp Web layout adjustment - SOMENTE apos classe botcarga-ready */
 body.botcarga-ready #app {
   width: calc(100% - 380px) !important;
-}
-
-/* Antes de conectar, sidebar fica sobreposta sem afetar o layout */
-body.botcarga-active:not(.botcarga-ready) #botcarga-sidebar {
-  position: fixed;
-  right: 0;
-  top: 0;
 }
 
 /* Responsive adjustments */

@@ -10,7 +10,7 @@ const BotCargaSidebar = {
     this.injectToggleButton();
     this.setupTabs();
     this.loadColaboradorAtivo();
-    document.body.classList.add('botcarga-active');
+    document.body.classList.add('botcarga-ready');
   },
 
   injectSidebar() {
@@ -94,12 +94,12 @@ const BotCargaSidebar = {
       sidebar.classList.remove('collapsed');
       toggle.classList.remove('collapsed');
       toggle.innerHTML = '\u25B6';
-      document.body.classList.add('botcarga-active');
+      document.body.classList.add('botcarga-ready');
     } else {
       sidebar.classList.add('collapsed');
       toggle.classList.add('collapsed');
       toggle.innerHTML = '\u25C0';
-      document.body.classList.remove('botcarga-active');
+      document.body.classList.remove('botcarga-ready');
     }
   },
 
