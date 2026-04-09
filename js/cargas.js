@@ -469,26 +469,62 @@ const BotCargaCargas = {
 
     if (messageBox) {
       messageBox.focus();
-      // Clear existing content
+      // Limpa conteudo existente
       messageBox.innerHTML = '';
-      // Split by newlines and insert with proper line breaks for WhatsApp
-      const lines = texto.split('\n');
-      lines.forEach((line, index) => {
-        if (index > 0) {
-          // Insert a Shift+Enter (line break) for each newline
-          messageBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, shiftKey: true, bubbles: true }));
-        }
-        if (line) {
-          document.execCommand('insertText', false, line);
-        }
-      });
-      messageBox.dispatchEvent(new Event('input', { bubbles: true }));
-      BotCargaSidebar.showToast('Texto colado no chat! Envie a mensagem.');
+
+      // Abordagem 1: Usa ClipboardEvent (simula Ctrl+V com formatacao)
+      // Isso preserva quebras de linha no WhatsApp Web
+      try {
+        const clipboardData = new DataTransfer();
+        clipboardData.setData('text/plain', texto);
+        const pasteEvent = new ClipboardEvent('paste', {
+          bubbles: true,
+          cancelable: true,
+          clipboardData: clipboardData
+        });
+        messageBox.dispatchEvent(pasteEvent);
+
+        // Verifica se o paste funcionou
+        setTimeout(() => {
+          if (messageBox.textContent.trim().length > 0) {
+            messageBox.dispatchEvent(new Event('input', { bubbles: true }));
+            BotCargaSidebar.showToast('Texto colado no chat! Envie a mensagem.');
+          } else {
+            // Fallback: insere linha por linha com Shift+Enter
+            this.colarNoChat_fallback(messageBox, texto);
+          }
+        }, 100);
+      } catch (e) {
+        // Fallback se ClipboardEvent nao funcionar
+        this.colarNoChat_fallback(messageBox, texto);
+      }
     } else {
+      // Nenhum chat aberto - copia para clipboard
       navigator.clipboard.writeText(texto).then(() => {
-        BotCargaSidebar.showToast('Abra uma conversa primeiro! Texto copiado para colar manualmente.');
+        BotCargaSidebar.showToast('Abra uma conversa primeiro! Texto copiado para colar manualmente (Ctrl+V).');
       });
     }
+  },
+
+  colarNoChat_fallback(messageBox, texto) {
+    messageBox.focus();
+    messageBox.innerHTML = '';
+    // Insere linha por linha com Shift+Enter
+    const lines = texto.split('\n');
+    lines.forEach((line, index) => {
+      if (index > 0) {
+        // Shift+Enter para quebra de linha
+        const enterDown = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, shiftKey: true, bubbles: true, cancelable: true });
+        const enterUp = new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, shiftKey: true, bubbles: true });
+        messageBox.dispatchEvent(enterDown);
+        messageBox.dispatchEvent(enterUp);
+      }
+      if (line) {
+        document.execCommand('insertText', false, line);
+      }
+    });
+    messageBox.dispatchEvent(new Event('input', { bubbles: true }));
+    BotCargaSidebar.showToast('Texto colado no chat! Envie a mensagem.');
   },
 
   avancarStatus(carga) {
@@ -791,6 +827,8 @@ const BotCargaCargas = {
         let pending = 0;
 
         BotCargaStorage.getColaboradorAtivo((colabId) => {
+          // Build all carga objects first
+          const cargasParaImportar = [];
           for (let i = startIndex; i < lines.length; i++) {
             const cols = lines[i].split(/[;,\t]/).map(c => c.trim().replace(/^["']|["']$/g, ''));
             if (cols.length < 2 || !cols[0] || !cols[1]) continue;
@@ -803,22 +841,29 @@ const BotCargaCargas = {
             });
             dados.status = 'aberta';
             if (colabId) dados.colaboradorId = colabId;
-
-            pending++;
-            BotCargaStorage.addCarga(dados, () => {
-              pending--;
-              importCount++;
-              if (pending === 0) {
-                BotCargaSidebar.showToast(`${importCount} carga${importCount !== 1 ? 's' : ''} importada${importCount !== 1 ? 's' : ''}!`);
-                this.renderFiltros();
-                this.renderLista();
-              }
-            });
+            cargasParaImportar.push(dados);
           }
 
-          if (pending === 0) {
+          if (cargasParaImportar.length === 0) {
             BotCargaSidebar.showToast('Nenhuma linha valida encontrada no arquivo.');
+            return;
           }
+
+          // Add all at once to avoid race conditions with sequential addCarga calls
+          BotCargaStorage.getCargas((cargas) => {
+            cargasParaImportar.forEach(dados => {
+              dados.id = Date.now().toString() + Math.random().toString(36).substr(2, 4);
+              dados.criadoEm = new Date().toISOString();
+              if (!dados.status) dados.status = 'aberta';
+              cargas.push(dados);
+            });
+            BotCargaStorage.saveCargas(cargas, () => {
+              const count = cargasParaImportar.length;
+              BotCargaSidebar.showToast(`${count} carga${count !== 1 ? 's' : ''} importada${count !== 1 ? 's' : ''}!`);
+              this.renderFiltros();
+              this.renderLista();
+            });
+          });
         });
       };
       reader.readAsText(file, 'UTF-8');

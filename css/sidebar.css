@@ -646,7 +646,7 @@ body.botcarga-ready #app {
   width: calc(100% - 380px) !important;
 }
 
-/* Fix select dropdowns inside sidebar */
+/* Fix ALL interactive elements inside sidebar */
 #botcarga-sidebar select {
   -webkit-appearance: menulist !important;
   appearance: menulist !important;
@@ -656,9 +656,43 @@ body.botcarga-ready #app {
   z-index: 1 !important;
 }
 
+#botcarga-sidebar input[type="date"],
+#botcarga-sidebar input[type="time"],
+#botcarga-sidebar input[type="datetime-local"] {
+  -webkit-appearance: auto !important;
+  appearance: auto !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
 #botcarga-sidebar input,
 #botcarga-sidebar textarea,
 #botcarga-sidebar button {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+#botcarga-sidebar input[type="text"],
+#botcarga-sidebar input[type="number"],
+#botcarga-sidebar textarea {
+  cursor: text !important;
+}
+
+#botcarga-sidebar input[type="file"] {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Garante que o toggle nao seja bloqueado */
+#botcarga-toggle {
+  pointer-events: auto !important;
+}
+
+/* Garante que modais e overlays funcionem */
+.bc-modal-overlay,
+.bc-modal-overlay * {
   pointer-events: auto !important;
 }
 

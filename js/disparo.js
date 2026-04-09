@@ -333,16 +333,38 @@ const BotCargaDisparo = {
         }
       }
 
-      // Cola a mensagem
+      // Cola a mensagem com quebras de linha
       const messageBox = document.querySelector('div[contenteditable="true"][data-tab="10"]')
         || document.querySelector('footer div[contenteditable="true"]')
         || document.querySelector('div[contenteditable="true"][role="textbox"]');
 
       if (messageBox) {
         messageBox.focus();
-        document.execCommand('insertText', false, mensagem);
-        messageBox.dispatchEvent(new Event('input', { bubbles: true }));
+        messageBox.innerHTML = '';
 
+        // Tenta usar ClipboardEvent para preservar quebras de linha
+        try {
+          const clipboardData = new DataTransfer();
+          clipboardData.setData('text/plain', mensagem);
+          const pasteEvent = new ClipboardEvent('paste', {
+            bubbles: true,
+            cancelable: true,
+            clipboardData: clipboardData
+          });
+          messageBox.dispatchEvent(pasteEvent);
+        } catch (e) {
+          // Fallback: insere linha por linha
+          const lines = mensagem.split('\n');
+          lines.forEach((line, index) => {
+            if (index > 0) {
+              messageBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, shiftKey: true, bubbles: true, cancelable: true }));
+              messageBox.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, shiftKey: true, bubbles: true }));
+            }
+            if (line) document.execCommand('insertText', false, line);
+          });
+        }
+
+        messageBox.dispatchEvent(new Event('input', { bubbles: true }));
         await this.delay(500);
 
         // Envia (pressiona Enter)

@@ -253,7 +253,8 @@ const BotCargaMotoristas = {
     const searchBox = document.querySelector('div[contenteditable="true"][data-tab="3"]');
     if (searchBox) {
       searchBox.focus();
-      searchBox.textContent = numero;
+      searchBox.textContent = '';
+      document.execCommand('insertText', false, numero);
       searchBox.dispatchEvent(new Event('input', { bubbles: true }));
       BotCargaSidebar.showToast('Buscando conversa...');
     } else {

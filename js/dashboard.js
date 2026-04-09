@@ -348,8 +348,9 @@ const BotCargaDashboard = {
       if (!col) { container.innerHTML = html; this.setupColabListeners(container, data); return; }
 
       const cargasColab = this.filtrarPorPeriodo(data.cargas.filter(c => c.colaboradorId === col.id));
-      const motoristasColab = this.filtrarPorPeriodo(data.motoristas.filter(m => m.colaboradorId === col.id));
-      const interessadosColab = this.filtrarPorPeriodo(data.interessados.filter(i => i.colaboradorId === col.id));
+      // Motoristas e interessados sao compartilhados (nao tem colaboradorId), mostra todos no periodo
+      const motoristasColab = this.filtrarPorPeriodo(data.motoristas);
+      const interessadosColab = this.filtrarPorPeriodo(data.interessados);
       const historicoColab = data.historico.filter(h => h.colaboradorId === col.id);
 
       const finalizadasColab = cargasColab.filter(c => c.status === 'finalizada').length;
