@@ -76,26 +76,11 @@ const BotCargaSidebar = {
     document.body.appendChild(sidebar);
 
     // Impede que o WhatsApp Web intercepte eventos dentro da sidebar
-    // Estrategia dupla:
-    // 1) BUBBLE phase (false) - para listeners do WhatsApp em body/document que usam bubble
-    // 2) CAPTURE phase no DOCUMENT - intercepta antes do WhatsApp e para se o alvo esta na sidebar
-    const eventsToBlock = ['mousedown', 'mouseup', 'click', 'touchstart', 'touchend',
+    // Usa SOMENTE bubble phase - para a propagacao DEPOIS que os filhos ja processaram
+    ['mousedown', 'mouseup', 'click', 'touchstart', 'touchend',
      'focus', 'input', 'change', 'keydown', 'keyup', 'keypress',
-     'pointerdown', 'pointerup'];
-
-    // Bubble phase: para propagacao apos o evento borbulhar pela sidebar
-    eventsToBlock.forEach(evt => {
+     'pointerdown', 'pointerup'].forEach(evt => {
       sidebar.addEventListener(evt, (e) => e.stopPropagation(), false);
-    });
-
-    // Capture phase no document: intercepta ANTES do WhatsApp e bloqueia se o alvo esta na sidebar
-    // Isso impede que listeners capture do WhatsApp (React) processem cliques da sidebar
-    eventsToBlock.forEach(evt => {
-      document.addEventListener(evt, (e) => {
-        if (e.target && (e.target.closest('#botcarga-sidebar') || e.target.closest('#botcarga-toggle'))) {
-          e.stopPropagation();
-        }
-      }, true);
     });
   },
 
