@@ -637,6 +637,22 @@ body.botcarga-ready #app {
   width: calc(100% - 380px) !important;
 }
 
+/* Fix select dropdowns inside sidebar */
+#botcarga-sidebar select {
+  -webkit-appearance: menulist !important;
+  appearance: menulist !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+#botcarga-sidebar input,
+#botcarga-sidebar textarea,
+#botcarga-sidebar button {
+  pointer-events: auto !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1200px) {
   #botcarga-sidebar {

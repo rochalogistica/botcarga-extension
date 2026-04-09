@@ -43,6 +43,14 @@ const BotCargaCargas = {
           \uD83D\uDCCB Copiar HTML
         </button>
       </div>
+      <div style="display:flex; gap:6px; margin-bottom:12px;">
+        <button class="bc-btn bc-btn-sm" id="bc-importar-planilha" style="flex:1; background:#f59e0b; color:white;" title="Importar cargas de planilha CSV/Excel">
+          📊 Importar Planilha
+        </button>
+        <button class="bc-btn bc-btn-sm" id="bc-colar-demanda" style="flex:1; background:#8b5cf6; color:white;" title="Colar texto de demanda de cargas">
+          📋 Colar Demanda
+        </button>
+      </div>
       <div id="bc-form-carga-container" style="margin-top: 12px;"></div>
       <div id="bc-filtros-carga" style="margin-top: 12px;"></div>
       <div id="bc-lista-cargas" style="margin-top: 8px;"></div>
@@ -83,6 +91,14 @@ const BotCargaCargas = {
           });
         });
       });
+    });
+
+    document.getElementById('bc-importar-planilha').addEventListener('click', () => {
+      this.importarPlanilha();
+    });
+
+    document.getElementById('bc-colar-demanda').addEventListener('click', () => {
+      this.mostrarColarDemanda();
     });
 
     this.renderFiltros();
@@ -447,19 +463,28 @@ const BotCargaCargas = {
 
   colarNoChat(carga) {
     const texto = this.gerarTextoEnvio(carga);
-    // Busca a caixa de mensagem do WhatsApp Web
     const messageBox = document.querySelector('div[contenteditable="true"][data-tab="10"]')
       || document.querySelector('footer div[contenteditable="true"]')
       || document.querySelector('div[contenteditable="true"][role="textbox"]');
 
     if (messageBox) {
       messageBox.focus();
-      // Insere o texto usando execCommand para manter compatibilidade com o WhatsApp Web
-      document.execCommand('insertText', false, texto);
+      // Clear existing content
+      messageBox.innerHTML = '';
+      // Split by newlines and insert with proper line breaks for WhatsApp
+      const lines = texto.split('\n');
+      lines.forEach((line, index) => {
+        if (index > 0) {
+          // Insert a Shift+Enter (line break) for each newline
+          messageBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, shiftKey: true, bubbles: true }));
+        }
+        if (line) {
+          document.execCommand('insertText', false, line);
+        }
+      });
       messageBox.dispatchEvent(new Event('input', { bubbles: true }));
       BotCargaSidebar.showToast('Texto colado no chat! Envie a mensagem.');
     } else {
-      // Fallback: copia para clipboard
       navigator.clipboard.writeText(texto).then(() => {
         BotCargaSidebar.showToast('Abra uma conversa primeiro! Texto copiado para colar manualmente.');
       });
@@ -731,5 +756,214 @@ const BotCargaCargas = {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  },
+
+  // ========== IMPORTAR PLANILHA ==========
+
+  importarPlanilha() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,.txt';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const text = event.target.result;
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        if (lines.length === 0) {
+          BotCargaSidebar.showToast('Arquivo vazio!');
+          return;
+        }
+
+        let startIndex = 0;
+        const firstLine = lines[0].toLowerCase();
+        if (firstLine.includes('origem') || firstLine.includes('destino')) {
+          startIndex = 1;
+        }
+
+        const colunas = ['origem', 'destino', 'tipoCarga', 'peso', 'veiculo', 'valor', 'dataColeta', 'dataEntrega', 'observacoes'];
+        let importCount = 0;
+        let pending = 0;
+
+        BotCargaStorage.getColaboradorAtivo((colabId) => {
+          for (let i = startIndex; i < lines.length; i++) {
+            const cols = lines[i].split(/[;,\t]/).map(c => c.trim().replace(/^["']|["']$/g, ''));
+            if (cols.length < 2 || !cols[0] || !cols[1]) continue;
+
+            const dados = {};
+            colunas.forEach((key, idx) => {
+              if (cols[idx] && cols[idx].trim()) {
+                dados[key] = cols[idx].trim();
+              }
+            });
+            dados.status = 'aberta';
+            if (colabId) dados.colaboradorId = colabId;
+
+            pending++;
+            BotCargaStorage.addCarga(dados, () => {
+              pending--;
+              importCount++;
+              if (pending === 0) {
+                BotCargaSidebar.showToast(`${importCount} carga${importCount !== 1 ? 's' : ''} importada${importCount !== 1 ? 's' : ''}!`);
+                this.renderFiltros();
+                this.renderLista();
+              }
+            });
+          }
+
+          if (pending === 0) {
+            BotCargaSidebar.showToast('Nenhuma linha valida encontrada no arquivo.');
+          }
+        });
+      };
+      reader.readAsText(file, 'UTF-8');
+      document.body.removeChild(input);
+    });
+
+    input.click();
+  },
+
+  // ========== COLAR DEMANDA ==========
+
+  mostrarColarDemanda() {
+    const container = document.getElementById('bc-form-carga-container');
+    container.innerHTML = `
+      <div class="bc-form">
+        <div class="bc-form-title">📋 Colar Demanda de Carga</div>
+        <div class="bc-form-group">
+          <label>Texto da demanda</label>
+          <textarea id="bc-demanda-texto" style="min-height:150px; font-size:12px; line-height:1.5;" placeholder="Cole aqui o texto da demanda de carga recebida pelo WhatsApp..."></textarea>
+        </div>
+        <div class="bc-form-actions">
+          <button class="bc-btn bc-btn-primary" id="bc-processar-demanda">
+            Processar
+          </button>
+          <button class="bc-btn" id="bc-cancelar-demanda" style="background: #e5e7eb; color: #374151;">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('bc-processar-demanda').addEventListener('click', () => {
+      const texto = document.getElementById('bc-demanda-texto').value.trim();
+      if (!texto) {
+        BotCargaSidebar.showToast('Cole o texto da demanda!');
+        return;
+      }
+      this.processarDemandaTexto(texto);
+    });
+
+    document.getElementById('bc-cancelar-demanda').addEventListener('click', () => {
+      container.innerHTML = '';
+    });
+  },
+
+  processarDemandaTexto(texto) {
+    const dados = {};
+
+    // Helper: find value after a label pattern
+    const extrair = (patterns, text) => {
+      for (const pattern of patterns) {
+        const regex = new RegExp(pattern + '\\s*[:\\-]?\\s*(.+)', 'im');
+        const match = text.match(regex);
+        if (match && match[1]) return match[1].trim().replace(/[*_~`]/g, '');
+      }
+      return '';
+    };
+
+    // Origem
+    dados.origem = extrair(['origem', 'de', 'coleta', 'saida', 'carregamento'], texto);
+
+    // Destino
+    dados.destino = extrair(['destino', 'para', 'entrega', 'descarga', 'chegada'], texto);
+
+    // Peso
+    const pesoMatch = texto.match(/peso\s*[:\-]?\s*([\d.,]+)\s*(ton|t|kg)?/i);
+    if (pesoMatch) {
+      dados.peso = pesoMatch[1].replace(',', '.');
+    }
+
+    // Valor / Frete
+    const valorMatch = texto.match(/(?:valor|frete|preco|R\$)\s*[:\-]?\s*R?\$?\s*([\d.,]+)/i);
+    if (valorMatch) {
+      dados.valor = valorMatch[1];
+    }
+
+    // Veiculo - detect vehicle types
+    const veiculos = ['Truck', 'Toco', 'Carreta', 'Carreta LS', 'Bitruck', 'Bitrem', 'Rodotrem', 'VUC', '3/4', 'Van'];
+    const textoLower = texto.toLowerCase();
+    for (const v of veiculos) {
+      if (textoLower.includes(v.toLowerCase())) {
+        dados.veiculo = v;
+        break;
+      }
+    }
+
+    // Tipo de carga
+    dados.tipoCarga = extrair(['tipo', 'tipo de carga', 'produto', 'mercadoria', 'carga'], texto);
+
+    // Data coleta
+    const dataColetaMatch = texto.match(/(?:coleta|carregamento|saida)\s*[:\-]?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]?\d{2,4}?)/i);
+    if (dataColetaMatch) {
+      dados.dataColeta = this.parseDataTexto(dataColetaMatch[1]);
+    }
+
+    // Data entrega
+    const dataEntregaMatch = texto.match(/(?:entrega|descarga|chegada)\s*[:\-]?\s*(\d{1,2}[\/\-]\d{1,2}[\/\-]?\d{2,4}?)/i);
+    if (dataEntregaMatch) {
+      dados.dataEntrega = this.parseDataTexto(dataEntregaMatch[1]);
+    }
+
+    // Clean up empty values
+    Object.keys(dados).forEach(k => { if (!dados[k]) delete dados[k]; });
+
+    // Check if we have minimum data
+    if (dados.origem && dados.destino) {
+      dados.status = 'aberta';
+      BotCargaStorage.getColaboradorAtivo((colabId) => {
+        if (colabId) dados.colaboradorId = colabId;
+        BotCargaStorage.addCarga(dados, () => {
+          BotCargaSidebar.showToast('Carga criada a partir da demanda!');
+          document.getElementById('bc-form-carga-container').innerHTML = '';
+          this.renderFiltros();
+          this.renderLista();
+        });
+      });
+    } else {
+      // Could not parse enough data - open form pre-filled
+      BotCargaSidebar.showToast('Dados insuficientes. Complete manualmente.');
+      this.editingId = null;
+      this.showForm({
+        origem: dados.origem || '',
+        destino: dados.destino || '',
+        tipoCarga: dados.tipoCarga || '',
+        peso: dados.peso || '',
+        veiculo: dados.veiculo || '',
+        valor: dados.valor || '',
+        dataColeta: dados.dataColeta || '',
+        dataEntrega: dados.dataEntrega || '',
+        observacoes: texto,
+        status: 'aberta'
+      });
+    }
+  },
+
+  parseDataTexto(dataStr) {
+    if (!dataStr) return '';
+    const parts = dataStr.split(/[\/\-]/);
+    if (parts.length >= 2) {
+      const dia = parts[0].padStart(2, '0');
+      const mes = parts[1].padStart(2, '0');
+      let ano = parts[2] || new Date().getFullYear().toString();
+      if (ano.length === 2) ano = '20' + ano;
+      return `${ano}-${mes}-${dia}`;
+    }
+    return '';
   }
 };
