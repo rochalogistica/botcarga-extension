@@ -632,9 +632,16 @@
   to { transform: translateY(20px); opacity: 0; }
 }
 
-/* WhatsApp Web layout adjustment */
-body.botcarga-active #app {
+/* WhatsApp Web layout adjustment - classe aplicada somente apos conexao */
+body.botcarga-ready #app {
   width: calc(100% - 380px) !important;
+}
+
+/* Antes de conectar, sidebar fica sobreposta sem afetar o layout */
+body.botcarga-active:not(.botcarga-ready) #botcarga-sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
 }
 
 /* Responsive adjustments */
@@ -642,7 +649,7 @@ body.botcarga-active #app {
   #botcarga-sidebar {
     width: 340px;
   }
-  body.botcarga-active #app {
+  body.botcarga-ready #app {
     width: calc(100% - 340px) !important;
   }
   #botcarga-toggle {
