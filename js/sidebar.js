@@ -76,16 +76,12 @@ const BotCargaSidebar = {
     document.body.appendChild(sidebar);
 
     // Impede que o WhatsApp Web intercepte eventos dentro da sidebar
-    sidebar.addEventListener('mousedown', (e) => e.stopPropagation(), true);
-    sidebar.addEventListener('mouseup', (e) => e.stopPropagation(), true);
-    sidebar.addEventListener('click', (e) => e.stopPropagation(), true);
-    sidebar.addEventListener('touchstart', (e) => e.stopPropagation(), true);
-    sidebar.addEventListener('touchend', (e) => e.stopPropagation(), true);
-    sidebar.addEventListener('focus', (e) => e.stopPropagation(), true);
-    sidebar.addEventListener('input', (e) => e.stopPropagation(), true);
-    sidebar.addEventListener('change', (e) => e.stopPropagation(), true);
-    sidebar.addEventListener('keydown', (e) => e.stopPropagation(), true);
-    sidebar.addEventListener('keyup', (e) => e.stopPropagation(), true);
+    // Usa fase BUBBLE (false) para que os listeners internos executem primeiro
+    ['mousedown', 'mouseup', 'click', 'touchstart', 'touchend',
+     'focus', 'input', 'change', 'keydown', 'keyup', 'keypress',
+     'pointerdown', 'pointerup'].forEach(evt => {
+      sidebar.addEventListener(evt, (e) => e.stopPropagation(), false);
+    });
   },
 
   injectToggleButton() {
