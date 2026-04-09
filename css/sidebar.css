@@ -24,6 +24,15 @@
 
 #botcarga-sidebar * {
   box-sizing: border-box;
+  pointer-events: auto !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+}
+
+#botcarga-sidebar {
+  pointer-events: auto !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
 }
 
 /* Toggle Button */
