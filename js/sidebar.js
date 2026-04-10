@@ -10,6 +10,7 @@ const BotCargaSidebar = {
     this.injectToggleButton();
     this.setupTabs();
     this.loadColaboradorAtivo();
+    this.startSelectObserver();
     document.body.classList.add('botcarga-ready');
   },
 
@@ -251,5 +252,146 @@ const BotCargaSidebar = {
     toast.textContent = message;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
+  },
+
+  // ========== CUSTOM SELECTS ==========
+  // Substitui <select> nativos por dropdowns customizados (divs)
+  // para funcionar dentro do WhatsApp Web
+
+  initCustomSelects() {
+    const sidebar = document.getElementById('botcarga-sidebar');
+    if (!sidebar) return;
+
+    sidebar.querySelectorAll('select:not(.bc-cs-done)').forEach(select => {
+      select.classList.add('bc-cs-done');
+
+      // Esconde o select nativo
+      select.style.cssText = 'position:absolute !important; opacity:0 !important; pointer-events:none !important; width:0 !important; height:0 !important; overflow:hidden !important;';
+
+      // Cria wrapper
+      const wrapper = document.createElement('div');
+      wrapper.className = 'bc-cs-wrapper';
+      wrapper.style.cssText = 'position:relative; width:100%;';
+
+      // Cria trigger (botao que mostra valor selecionado)
+      const trigger = document.createElement('div');
+      trigger.className = 'bc-cs-trigger';
+      trigger.dataset.for = select.id;
+      trigger.style.cssText = 'display:flex; align-items:center; justify-content:space-between; width:100%; padding:8px 12px; background:white; border:1px solid #d1d5db; border-radius:8px; font-size:13px; color:#1a1a2e; cursor:pointer; font-family:inherit; user-select:none; min-height:38px; box-sizing:border-box;';
+
+      // Texto do trigger
+      const triggerText = document.createElement('span');
+      triggerText.className = 'bc-cs-text';
+      const selectedOpt = select.options[select.selectedIndex];
+      triggerText.textContent = (selectedOpt && selectedOpt.value) ? selectedOpt.textContent : (select.options[0] ? select.options[0].textContent : 'Selecione');
+      triggerText.style.cssText = (selectedOpt && selectedOpt.value) ? 'color:#1a1a2e;' : 'color:#9ca3af;';
+
+      // Seta
+      const arrow = document.createElement('span');
+      arrow.textContent = '\u25BC';
+      arrow.style.cssText = 'font-size:10px; color:#6b7280; margin-left:8px; transition:transform 0.2s;';
+
+      trigger.appendChild(triggerText);
+      trigger.appendChild(arrow);
+
+      // Cria dropdown de opcoes
+      const dropdown = document.createElement('div');
+      dropdown.className = 'bc-cs-dropdown';
+      dropdown.style.cssText = 'display:none; position:absolute; top:100%; left:0; right:0; margin-top:4px; background:white; border:1px solid #d1d5db; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.12); z-index:10010; max-height:200px; overflow-y:auto;';
+
+      Array.from(select.options).forEach((opt, idx) => {
+        const optDiv = document.createElement('div');
+        optDiv.className = 'bc-cs-option';
+        optDiv.dataset.value = opt.value;
+        optDiv.textContent = opt.textContent;
+        const isSelected = opt.value === select.value;
+        optDiv.style.cssText = `padding:8px 12px; font-size:13px; cursor:pointer; font-family:inherit; transition:background 0.15s; border-bottom:1px solid #f3f4f6; ${isSelected ? 'background:#eff6ff; color:#2563eb; font-weight:600;' : 'color:#374151;'}`;
+
+        optDiv.addEventListener('mouseenter', () => {
+          optDiv.style.background = '#f0f4ff';
+        });
+        optDiv.addEventListener('mouseleave', () => {
+          optDiv.style.background = (opt.value === select.value) ? '#eff6ff' : 'white';
+        });
+
+        optDiv.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          // Atualiza select nativo
+          select.value = opt.value;
+          // Atualiza visual
+          triggerText.textContent = opt.textContent;
+          triggerText.style.color = opt.value ? '#1a1a2e' : '#9ca3af';
+          // Atualiza destaques
+          dropdown.querySelectorAll('.bc-cs-option').forEach(o => {
+            o.style.background = 'white';
+            o.style.color = '#374151';
+            o.style.fontWeight = 'normal';
+          });
+          optDiv.style.background = '#eff6ff';
+          optDiv.style.color = '#2563eb';
+          optDiv.style.fontWeight = '600';
+          // Fecha dropdown
+          dropdown.style.display = 'none';
+          arrow.style.transform = 'rotate(0deg)';
+          // Dispara change event
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        dropdown.appendChild(optDiv);
+      });
+
+      // Abre/fecha dropdown ao clicar no trigger
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Fecha outros dropdowns abertos
+        document.querySelectorAll('.bc-cs-dropdown').forEach(d => {
+          if (d !== dropdown) d.style.display = 'none';
+        });
+        document.querySelectorAll('.bc-cs-trigger span:last-child').forEach(a => {
+          if (a !== arrow) a.style.transform = 'rotate(0deg)';
+        });
+
+        if (dropdown.style.display === 'none') {
+          dropdown.style.display = 'block';
+          arrow.style.transform = 'rotate(180deg)';
+        } else {
+          dropdown.style.display = 'none';
+          arrow.style.transform = 'rotate(0deg)';
+        }
+      });
+
+      wrapper.appendChild(trigger);
+      wrapper.appendChild(dropdown);
+      select.parentNode.insertBefore(wrapper, select.nextSibling);
+    });
+  },
+
+  // Inicia observer para converter selects automaticamente
+  startSelectObserver() {
+    const sidebar = document.getElementById('botcarga-sidebar');
+    if (!sidebar) return;
+
+    // Converte selects existentes
+    this.initCustomSelects();
+
+    // Observa novas mudancas no DOM
+    this._selectObserver = new MutationObserver(() => {
+      // Verifica se ha selects nao convertidos
+      const pending = sidebar.querySelectorAll('select:not(.bc-cs-done)');
+      if (pending.length > 0) {
+        this.initCustomSelects();
+      }
+    });
+
+    this._selectObserver.observe(sidebar, { childList: true, subtree: true });
+
+    // Fecha dropdowns ao clicar fora
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.bc-cs-wrapper')) {
+        document.querySelectorAll('.bc-cs-dropdown').forEach(d => d.style.display = 'none');
+        document.querySelectorAll('.bc-cs-trigger span:last-child').forEach(a => a.style.transform = 'rotate(0deg)');
+      }
+    });
   }
 };
