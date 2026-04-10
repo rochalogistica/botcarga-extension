@@ -38,6 +38,7 @@
     BotCargaCargas.init();
     BotCargaKanban.init();
     BotCargaDisparo.init();
+    BotCargaMessageObserver.init();
 
     // Ajusta layout do WhatsApp
     document.body.classList.add('botcarga-ready');

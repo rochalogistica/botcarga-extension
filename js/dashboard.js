@@ -494,12 +494,12 @@ const BotCargaDashboard = {
         <div class="bc-form-title">${col ? '\u270F\uFE0F Editar Colaborador' : '\u2795 Novo Colaborador'}</div>
         <div class="bc-form-group">
           <label>Nome Completo</label>
-          <input type="text" id="bc-colab-nome" placeholder="Ex: Maria Silva" value="${col ? col.nome : ''}">
+          <input type="text" id="bc-colab-form-nome" placeholder="Ex: Maria Silva" value="${col ? col.nome : ''}">
         </div>
         <div class="bc-form-row">
           <div class="bc-form-group">
             <label>Cargo</label>
-            <select id="bc-colab-cargo">
+            <select id="bc-colab-form-cargo">
               <option value="Operador" ${col && col.cargo === 'Operador' ? 'selected' : ''}>Operador</option>
               <option value="Supervisor" ${col && col.cargo === 'Supervisor' ? 'selected' : ''}>Supervisor</option>
               <option value="Gerente" ${col && col.cargo === 'Gerente' ? 'selected' : ''}>Gerente</option>
@@ -508,31 +508,31 @@ const BotCargaDashboard = {
           </div>
           <div class="bc-form-group">
             <label>Telefone</label>
-            <input type="text" id="bc-colab-telefone" placeholder="(11) 99999-9999" value="${col ? (col.telefone || '') : ''}">
+            <input type="text" id="bc-colab-form-telefone" placeholder="(11) 99999-9999" value="${col ? (col.telefone || '') : ''}">
           </div>
         </div>
         <div class="bc-form-group">
           <label>WhatsApp (numero com DDD)</label>
-          <input type="text" id="bc-colab-whatsapp" placeholder="Ex: 5511977252175" value="${col ? (col.whatsapp || '') : ''}">
+          <input type="text" id="bc-colab-form-whatsapp" placeholder="Ex: 5511977252175" value="${col ? (col.whatsapp || '') : ''}">
           <div style="font-size:9px; color:#6b7280; margin-top:2px;">Formato: 55 + DDD + numero (usado na landing page e disparos)</div>
         </div>
         <div class="bc-form-group">
           <label>Email</label>
-          <input type="text" id="bc-colab-email" placeholder="email@empresa.com" value="${col ? (col.email || '') : ''}">
+          <input type="text" id="bc-colab-form-email" placeholder="email@empresa.com" value="${col ? (col.email || '') : ''}">
         </div>
         <div class="bc-form-actions">
-          <button class="bc-btn bc-btn-primary bc-btn-sm" id="bc-colab-salvar">${col ? 'Atualizar' : 'Salvar'}</button>
-          <button class="bc-btn bc-btn-sm" id="bc-colab-cancelar" style="background:#e5e7eb; color:#374151;">Cancelar</button>
+          <button class="bc-btn bc-btn-primary bc-btn-sm" id="bc-colab-form-salvar">${col ? 'Atualizar' : 'Salvar'}</button>
+          <button class="bc-btn bc-btn-sm" id="bc-colab-form-cancelar" style="background:#e5e7eb; color:#374151;">Cancelar</button>
         </div>
       </div>
     `;
 
-    document.getElementById('bc-colab-salvar').addEventListener('click', () => {
-      const nome = document.getElementById('bc-colab-nome').value.trim();
-      const cargo = document.getElementById('bc-colab-cargo').value;
-      const telefone = document.getElementById('bc-colab-telefone').value.trim();
-      const whatsapp = document.getElementById('bc-colab-whatsapp').value.trim();
-      const email = document.getElementById('bc-colab-email').value.trim();
+    document.getElementById('bc-colab-form-salvar').addEventListener('click', () => {
+      const nome = document.getElementById('bc-colab-form-nome').value.trim();
+      const cargo = document.getElementById('bc-colab-form-cargo').value;
+      const telefone = document.getElementById('bc-colab-form-telefone').value.trim();
+      const whatsapp = document.getElementById('bc-colab-form-whatsapp').value.trim();
+      const email = document.getElementById('bc-colab-form-email').value.trim();
 
       if (!nome) { BotCargaSidebar.showToast('Preencha o nome!'); return; }
 
@@ -551,7 +551,7 @@ const BotCargaDashboard = {
       }
     });
 
-    document.getElementById('bc-colab-cancelar').addEventListener('click', () => this.render());
+    document.getElementById('bc-colab-form-cancelar').addEventListener('click', () => this.render());
   },
 
   // ========== HELPERS ==========

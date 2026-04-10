@@ -148,9 +148,23 @@ const BotCargaCargas = {
             </select>
           </div>
           <div class="bc-form-group">
-            <label>Valor do Frete (R$)</label>
-            <input type="text" id="bc-carga-valor" placeholder="Ex: 5.000,00" value="${carga ? (carga.valor || '') : ''}">
+            <label>Carroceria</label>
+            <select id="bc-carga-carroceria">
+              <option value="">Selecione</option>
+              <option value="Bau" ${carga && carga.carroceria === 'Bau' ? 'selected' : ''}>Bau</option>
+              <option value="Sider" ${carga && carga.carroceria === 'Sider' ? 'selected' : ''}>Sider</option>
+              <option value="Graneleiro" ${carga && carga.carroceria === 'Graneleiro' ? 'selected' : ''}>Graneleiro</option>
+              <option value="Tanque" ${carga && carga.carroceria === 'Tanque' ? 'selected' : ''}>Tanque</option>
+              <option value="Plataforma" ${carga && carga.carroceria === 'Plataforma' ? 'selected' : ''}>Plataforma</option>
+              <option value="Cacamba" ${carga && carga.carroceria === 'Cacamba' ? 'selected' : ''}>Cacamba</option>
+              <option value="Refrigerado" ${carga && carga.carroceria === 'Refrigerado' ? 'selected' : ''}>Refrigerado</option>
+              <option value="Porta Container" ${carga && carga.carroceria === 'Porta Container' ? 'selected' : ''}>Porta Container</option>
+            </select>
           </div>
+        </div>
+        <div class="bc-form-group">
+          <label>Valor do Frete (R$)</label>
+          <input type="text" id="bc-carga-valor" placeholder="Ex: 5.000,00" value="${carga ? (carga.valor || '') : ''}">
         </div>
         <div class="bc-form-row">
           <div class="bc-form-group">
@@ -201,6 +215,7 @@ const BotCargaCargas = {
     const tipoCarga = document.getElementById('bc-carga-tipo').value.trim();
     const peso = document.getElementById('bc-carga-peso').value.trim();
     const veiculo = document.getElementById('bc-carga-veiculo').value;
+    const carroceria = document.getElementById('bc-carga-carroceria').value;
     const valor = document.getElementById('bc-carga-valor').value.trim();
     const dataColeta = document.getElementById('bc-carga-data-coleta').value;
     const dataEntrega = document.getElementById('bc-carga-data-entrega').value;
@@ -211,7 +226,7 @@ const BotCargaCargas = {
       return;
     }
 
-    const dados = { origem, destino, tipoCarga, peso, veiculo, valor, dataColeta, dataEntrega, observacoes };
+    const dados = { origem, destino, tipoCarga, peso, veiculo, carroceria, valor, dataColeta, dataEntrega, observacoes };
 
     if (this.editingId) {
       const statusEl = document.getElementById('bc-carga-status');
@@ -347,7 +362,7 @@ const BotCargaCargas = {
               <div class="bc-card-info">
                 ${c.tipoCarga ? `<div class="bc-card-detail"><span class="bc-card-detail-icon">\uD83D\uDCE6</span>${this.escapeHtml(c.tipoCarga)}</div>` : ''}
                 ${c.peso ? `<div class="bc-card-detail"><span class="bc-card-detail-icon">\u2696\uFE0F</span>${this.escapeHtml(c.peso)} ton</div>` : ''}
-                ${c.veiculo ? `<div class="bc-card-detail"><span class="bc-card-detail-icon">\uD83D\uDE9A</span>${this.escapeHtml(c.veiculo)}</div>` : ''}
+                ${c.veiculo ? `<div class="bc-card-detail"><span class="bc-card-detail-icon">\uD83D\uDE9A</span>${this.escapeHtml(c.veiculo)}${c.carroceria ? ' - ' + this.escapeHtml(c.carroceria) : ''}</div>` : ''}
                 ${c.valor ? `<div class="bc-card-detail"><span class="bc-card-detail-icon">\uD83D\uDCB0</span>R$ ${this.escapeHtml(c.valor)}</div>` : ''}
                 ${c.dataColeta ? `<div class="bc-card-detail"><span class="bc-card-detail-icon">\uD83D\uDCC5</span>Coleta: ${this.formatarData(c.dataColeta)}</div>` : ''}
                 ${c.dataEntrega ? `<div class="bc-card-detail"><span class="bc-card-detail-icon">\uD83C\uDFC1</span>Entrega: ${this.formatarData(c.dataEntrega)}</div>` : ''}
@@ -452,7 +467,7 @@ const BotCargaCargas = {
     texto += `\uD83C\uDFC1 *Destino:* ${carga.destino}\n`;
     if (carga.tipoCarga) texto += `\uD83D\uDCE6 *Tipo:* ${carga.tipoCarga}\n`;
     if (carga.peso) texto += `\u2696\uFE0F *Peso:* ${carga.peso} ton\n`;
-    if (carga.veiculo) texto += `\uD83D\uDE9A *Veiculo:* ${carga.veiculo}\n`;
+    if (carga.veiculo) texto += `\uD83D\uDE9A *Veiculo:* ${carga.veiculo}${carga.carroceria ? ' - ' + carga.carroceria : ''}\n`;
     if (carga.valor) texto += `\uD83D\uDCB0 *Valor:* R$ ${carga.valor}\n`;
     if (carga.dataColeta) texto += `\uD83D\uDCC5 *Coleta:* ${this.formatarData(carga.dataColeta)}\n`;
     if (carga.dataEntrega) texto += `\uD83D\uDCC5 *Entrega:* ${this.formatarData(carga.dataEntrega)}\n`;
@@ -576,10 +591,13 @@ const BotCargaCargas = {
                 <div style="padding:8px 12px; border-bottom:1px solid #f0f2f5; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:background 0.2s;"
                      class="bc-interessado-item" data-telefone="${this.escapeHtml(i.telefone)}" data-nome="${this.escapeHtml(i.nome)}">
                   <div>
-                    <div style="font-size:13px; font-weight:600; color:#1a1a2e;">${this.escapeHtml(i.nome)}</div>
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span style="font-size:13px; font-weight:600; color:#1a1a2e;">${this.escapeHtml(i.nome)}</span>
+                      ${i.fonte === 'auto-whatsapp' ? '<span style="background:#dcfce7; color:#16a34a; padding:1px 6px; border-radius:4px; font-size:9px; font-weight:600;">AUTO</span>' : ''}
+                    </div>
                     <div style="font-size:11px; color:#6b7280; display:flex; gap:8px; margin-top:2px;">
                       <span>\uD83D\uDCF1 ${this.escapeHtml(i.telefone)}</span>
-                      ${i.veiculo ? `<span>\uD83D\uDE9A ${this.escapeHtml(i.veiculo)}</span>` : ''}
+                      ${i.veiculo ? `<span>\uD83D\uDE9A ${this.escapeHtml(i.veiculo)}${i.carroceria ? '/' + this.escapeHtml(i.carroceria) : ''}</span>` : ''}
                       ${i.regiao ? `<span>\uD83C\uDF0E ${this.escapeHtml(i.regiao)}</span>` : ''}
                     </div>
                     ${i.observacoes ? `<div style="font-size:10px; color:#9ca3af; margin-top:2px;">\uD83D\uDCDD ${this.escapeHtml(i.observacoes)}</div>` : ''}
@@ -738,7 +756,7 @@ const BotCargaCargas = {
         return;
       }
 
-      BotCargaStorage.addInteressado({ cargaId, nome, telefone, veiculo, carroceria, regiao, observacoes }, () => {
+      BotCargaStorage.addInteressado({ cargaId, nome, telefone, veiculo, carroceria, regiao, observacoes, fonte: 'manual' }, () => {
         BotCargaSidebar.showToast('Interessado adicionado!');
         this.renderLista();
       });

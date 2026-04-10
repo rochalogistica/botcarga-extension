@@ -139,7 +139,21 @@ const BotCargaDisparo = {
         opt.textContent = `${c.origem} \u27A1 ${c.destino} ${c.valor ? '- R$ ' + c.valor : ''}`;
         select.appendChild(opt);
       });
+      // Recria o custom select pois o MutationObserver ja converteu antes das opcoes serem carregadas
+      this.refreshCustomSelect(select);
     });
+  },
+
+  refreshCustomSelect(select) {
+    // Remove o wrapper customizado existente
+    const wrapper = select.parentNode && select.parentNode.querySelector('.bc-cs-wrapper');
+    if (wrapper) wrapper.remove();
+    // Remove marcador para que initCustomSelects reconverta
+    select.classList.remove('bc-cs-done');
+    // Restaura visibilidade temporaria para reconversao
+    select.style.cssText = '';
+    // Reconverte
+    BotCargaSidebar.initCustomSelects();
   },
 
   setupEventListeners() {

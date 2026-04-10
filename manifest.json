@@ -14,7 +14,7 @@
     {
       "matches": ["https://web.whatsapp.com/*"],
       "css": ["css/sidebar.css"],
-      "js": ["js/storage.js", "js/sidebar.js", "js/dashboard.js", "js/motoristas.js", "js/cargas.js", "js/kanban.js", "js/disparo.js", "js/pdf-generator.js", "js/app.js"],
+      "js": ["js/storage.js", "js/sidebar.js", "js/dashboard.js", "js/motoristas.js", "js/cargas.js", "js/kanban.js", "js/disparo.js", "js/pdf-generator.js", "js/message-observer.js", "js/app.js"],
       "run_at": "document_idle"
     }
   ],
