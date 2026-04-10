@@ -107,9 +107,22 @@ const BotCargaCargas = {
 
   showForm(carga = null) {
     const container = document.getElementById('bc-form-carga-container');
+
+    // Carrega colaboradores para o select
+    BotCargaStorage.getColaboradores((colaboradores) => {
+    BotCargaStorage.getColaboradorAtivo((colabAtivoId) => {
+      const colabSelecionado = carga ? (carga.colaboradorId || '') : (colabAtivoId || '');
+
     container.innerHTML = `
       <div class="bc-form">
         <div class="bc-form-title">${carga ? '\u270F\uFE0F Editar Carga' : '\u2795 Nova Carga'}</div>
+        <div class="bc-form-group">
+          <label>Colaborador Responsavel</label>
+          <select id="bc-carga-colaborador">
+            <option value="">-- Sem colaborador --</option>
+            ${colaboradores.map(c => `<option value="${c.id}" ${c.id === colabSelecionado ? 'selected' : ''}>${c.nome} (${c.cargo || 'Operador'})</option>`).join('')}
+          </select>
+        </div>
         <div class="bc-form-row">
           <div class="bc-form-group">
             <label>Origem</label>
@@ -207,6 +220,8 @@ const BotCargaCargas = {
       container.innerHTML = '';
       this.editingId = null;
     });
+    }); // fecha getColaboradorAtivo
+    }); // fecha getColaboradores
   },
 
   salvar() {
@@ -226,7 +241,9 @@ const BotCargaCargas = {
       return;
     }
 
+    const colaboradorId = document.getElementById('bc-carga-colaborador').value;
     const dados = { origem, destino, tipoCarga, peso, veiculo, carroceria, valor, dataColeta, dataEntrega, observacoes };
+    if (colaboradorId) dados.colaboradorId = colaboradorId;
 
     if (this.editingId) {
       const statusEl = document.getElementById('bc-carga-status');
@@ -240,15 +257,11 @@ const BotCargaCargas = {
         this.renderLista();
       });
     } else {
-      // Vincula ao colaborador ativo
-      BotCargaStorage.getColaboradorAtivo((colabId) => {
-        if (colabId) dados.colaboradorId = colabId;
-        BotCargaStorage.addCarga(dados, () => {
-          BotCargaSidebar.showToast('Carga cadastrada!');
-          document.getElementById('bc-form-carga-container').innerHTML = '';
-          this.renderFiltros();
-          this.renderLista();
-        });
+      BotCargaStorage.addCarga(dados, () => {
+        BotCargaSidebar.showToast('Carga cadastrada!');
+        document.getElementById('bc-form-carga-container').innerHTML = '';
+        this.renderFiltros();
+        this.renderLista();
       });
     }
   },
